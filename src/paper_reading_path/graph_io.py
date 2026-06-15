@@ -15,6 +15,11 @@ def write_mermaid_graph(graph_path: Path, output_path: Path) -> None:
     output_path.write_text(mermaid_markdown(payload), encoding="utf-8")
 
 
+def write_dot_graph(graph_path: Path, output_path: Path) -> None:
+    payload = json.loads(graph_path.read_text(encoding="utf-8"))
+    output_path.write_text(dot_graph(payload), encoding="utf-8")
+
+
 def mermaid_markdown(payload: dict) -> str:
     return "# Citation Graph\n\n```mermaid\n" + mermaid_graph(payload) + "```\n"
 
@@ -38,6 +43,33 @@ def mermaid_graph(payload: dict) -> str:
             continue
         lines.append(f"  {node_ids[from_id]} --> {node_ids[to_id]}")
 
+    return "\n".join(lines) + "\n"
+
+
+def dot_graph(payload: dict) -> str:
+    nodes = payload.get("nodes", [])
+    edges = payload.get("edges", [])
+    node_ids = {node.get("id", ""): f"n{index}" for index, node in enumerate(nodes, start=1)}
+    lines = [
+        "digraph CitationGraph {",
+        "  graph [rankdir=LR];",
+        "  node [shape=box, style=rounded];",
+    ]
+
+    for node in nodes:
+        node_id = node.get("id", "")
+        if not node_id:
+            continue
+        lines.append(f"  {node_ids[node_id]} [label={_dot_label(node)}];")
+
+    for edge in edges:
+        from_id = edge.get("from", "")
+        to_id = edge.get("to", "")
+        if from_id not in node_ids or to_id not in node_ids:
+            continue
+        lines.append(f"  {node_ids[from_id]} -> {node_ids[to_id]};")
+
+    lines.append("}")
     return "\n".join(lines) + "\n"
 
 
@@ -127,3 +159,11 @@ def _mermaid_label(node: dict) -> str:
     citation_count = node.get("citation_count") or 0
     suffix = f" ({year}, {citation_count} cites)" if year else f" ({citation_count} cites)"
     return json.dumps(f"{title}{suffix}")
+
+
+def _dot_label(node: dict) -> str:
+    title = node.get("title") or node.get("path") or node.get("id") or "Paper"
+    year = node.get("year") or ""
+    citation_count = node.get("citation_count") or 0
+    metadata = f"{year} | {citation_count} cites" if year else f"{citation_count} cites"
+    return json.dumps(f"{title}\n{metadata}")

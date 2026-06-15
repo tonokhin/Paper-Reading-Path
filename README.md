@@ -28,6 +28,13 @@ Visualize the prerequisite graph:
 
 Open `citation_graph.md` in a Markdown viewer that supports Mermaid, such as GitHub or VS Code Markdown Preview.
 
+Or generate a Graphviz DOT file:
+
+```bash
+.venv/bin/paper-reading-path visualize citation_graph.json --format dot --output citation_graph.dot
+dot -Tpng citation_graph.dot -o citation_graph.png
+```
+
 ## Test With AI Paper Fetcher PDFs
 
 If you already downloaded papers with AI Paper Fetcher, run:
@@ -81,6 +88,7 @@ The current MVP:
 .venv/bin/paper-reading-path order ./papers
 .venv/bin/paper-reading-path order ./papers --graph-output citation_graph.json
 .venv/bin/paper-reading-path visualize citation_graph.json --output citation_graph.md
+.venv/bin/paper-reading-path visualize citation_graph.json --format dot --output citation_graph.dot
 ```
 
 By default, an existing `citation_graph.json` is reused as a metadata cache on later runs. Use `--refresh-metadata` to force new arXiv/OpenAlex lookups, or `--no-cache` to ignore the existing graph file.

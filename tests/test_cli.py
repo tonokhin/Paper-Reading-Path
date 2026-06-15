@@ -115,6 +115,30 @@ class CliTests(unittest.TestCase):
             self.assertIn("```mermaid", output_path.read_text(encoding="utf-8"))
             self.assertIn("N1 --> N2", output_path.read_text(encoding="utf-8"))
 
+    def test_visualize_writes_graphviz_dot(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            graph_path = root / "citation_graph.json"
+            output_path = root / "citation_graph.dot"
+            graph_path.write_text(
+                json.dumps(
+                    {
+                        "nodes": [
+                            {"id": "A", "title": "Foundation", "year": 2017, "citation_count": 100},
+                            {"id": "B", "title": "Follow Up", "year": 2018, "citation_count": 50},
+                        ],
+                        "edges": [{"from": "A", "to": "B", "type": "prerequisite"}],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            exit_code = main(["visualize", str(graph_path), "--format", "dot", "--output", str(output_path)])
+
+            self.assertEqual(exit_code, 0)
+            self.assertIn("digraph CitationGraph", output_path.read_text(encoding="utf-8"))
+            self.assertIn("n1 -> n2;", output_path.read_text(encoding="utf-8"))
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -6,4 +6,6 @@ __pycache__/
 reading_order.md
 citation_graph.json
 citation_graph.md
+citation_graph.dot
+citation_graph.png
 .DS_Store

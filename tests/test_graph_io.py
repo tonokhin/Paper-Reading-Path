@@ -1,7 +1,7 @@
 from pathlib import Path
 import unittest
 
-from paper_reading_path.graph_io import apply_cached_metadata, graph_payload, load_cached_papers, mermaid_graph
+from paper_reading_path.graph_io import apply_cached_metadata, dot_graph, graph_payload, load_cached_papers, mermaid_graph
 from paper_reading_path.models import LocalPaper, PrerequisiteEdge
 
 
@@ -70,6 +70,23 @@ class GraphIoTests(unittest.TestCase):
         self.assertIn('N1["Foundation (2017, 100 cites)"]', graph)
         self.assertIn('N2["Follow Up (2018, 50 cites)"]', graph)
         self.assertIn("N1 --> N2", graph)
+
+    def test_dot_graph_renders_prerequisite_edges(self):
+        payload = {
+            "nodes": [
+                {"id": "A", "title": "Foundation", "year": 2017, "citation_count": 100},
+                {"id": "B", "title": "Follow Up", "year": 2018, "citation_count": 50},
+            ],
+            "edges": [{"from": "A", "to": "B", "type": "prerequisite"}],
+        }
+
+        graph = dot_graph(payload)
+
+        self.assertIn("digraph CitationGraph", graph)
+        self.assertIn("rankdir=LR", graph)
+        self.assertIn('n1 [label="Foundation\\n2017 | 100 cites"];', graph)
+        self.assertIn('n2 [label="Follow Up\\n2018 | 50 cites"];', graph)
+        self.assertIn("n1 -> n2;", graph)
 
 
 if __name__ == "__main__":
