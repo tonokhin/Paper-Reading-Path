@@ -5,4 +5,5 @@ __pycache__/
 
 reading_order.md
 citation_graph.json
+citation_graph.md
 .DS_Store
