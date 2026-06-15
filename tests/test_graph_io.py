@@ -1,7 +1,7 @@
 from pathlib import Path
 import unittest
 
-from paper_reading_path.graph_io import apply_cached_metadata, graph_payload, load_cached_papers
+from paper_reading_path.graph_io import apply_cached_metadata, graph_payload, load_cached_papers, mermaid_graph
 from paper_reading_path.models import LocalPaper, PrerequisiteEdge
 
 
@@ -54,6 +54,22 @@ class GraphIoTests(unittest.TestCase):
         self.assertEqual(paper.title, "Cached Paper")
         self.assertEqual(paper.openalex_id, "A")
         self.assertEqual(paper.referenced_openalex_ids, {"B"})
+
+    def test_mermaid_graph_renders_prerequisite_edges(self):
+        payload = {
+            "nodes": [
+                {"id": "A", "title": "Foundation", "year": 2017, "citation_count": 100},
+                {"id": "B", "title": "Follow Up", "year": 2018, "citation_count": 50},
+            ],
+            "edges": [{"from": "A", "to": "B", "type": "prerequisite"}],
+        }
+
+        graph = mermaid_graph(payload)
+
+        self.assertIn("graph TD", graph)
+        self.assertIn('N1["Foundation (2017, 100 cites)"]', graph)
+        self.assertIn('N2["Follow Up (2018, 50 cites)"]', graph)
+        self.assertIn("N1 --> N2", graph)
 
 
 if __name__ == "__main__":

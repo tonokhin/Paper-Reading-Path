@@ -10,6 +10,37 @@ def write_graph_json(papers: list[LocalPaper], edges: list[PrerequisiteEdge], ou
     output_path.write_text(json.dumps(graph_payload(papers, edges), indent=2) + "\n", encoding="utf-8")
 
 
+def write_mermaid_graph(graph_path: Path, output_path: Path) -> None:
+    payload = json.loads(graph_path.read_text(encoding="utf-8"))
+    output_path.write_text(mermaid_markdown(payload), encoding="utf-8")
+
+
+def mermaid_markdown(payload: dict) -> str:
+    return "# Citation Graph\n\n```mermaid\n" + mermaid_graph(payload) + "```\n"
+
+
+def mermaid_graph(payload: dict) -> str:
+    nodes = payload.get("nodes", [])
+    edges = payload.get("edges", [])
+    node_ids = {node.get("id", ""): f"N{index}" for index, node in enumerate(nodes, start=1)}
+    lines = ["graph TD"]
+
+    for node in nodes:
+        node_id = node.get("id", "")
+        if not node_id:
+            continue
+        lines.append(f"  {node_ids[node_id]}[{_mermaid_label(node)}]")
+
+    for edge in edges:
+        from_id = edge.get("from", "")
+        to_id = edge.get("to", "")
+        if from_id not in node_ids or to_id not in node_ids:
+            continue
+        lines.append(f"  {node_ids[from_id]} --> {node_ids[to_id]}")
+
+    return "\n".join(lines) + "\n"
+
+
 def graph_payload(papers: list[LocalPaper], edges: list[PrerequisiteEdge]) -> dict:
     return {
         "nodes": [
@@ -88,3 +119,11 @@ def _cache_keys(paper: LocalPaper) -> list[str]:
     if paper.arxiv_id:
         keys.append(paper.arxiv_id)
     return keys
+
+
+def _mermaid_label(node: dict) -> str:
+    title = node.get("title") or node.get("path") or node.get("id") or "Paper"
+    year = node.get("year") or ""
+    citation_count = node.get("citation_count") or 0
+    suffix = f" ({year}, {citation_count} cites)" if year else f" ({citation_count} cites)"
+    return json.dumps(f"{title}{suffix}")

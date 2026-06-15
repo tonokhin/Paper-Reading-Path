@@ -20,6 +20,14 @@ reading_order.md
 citation_graph.json
 ```
 
+Visualize the prerequisite graph:
+
+```bash
+.venv/bin/paper-reading-path visualize citation_graph.json --output citation_graph.md
+```
+
+Open `citation_graph.md` in a Markdown viewer that supports Mermaid, such as GitHub or VS Code Markdown Preview.
+
 ## Test With AI Paper Fetcher PDFs
 
 If you already downloaded papers with AI Paper Fetcher, run:
@@ -72,6 +80,7 @@ The current MVP:
 .venv/bin/paper-reading-path scan ./papers
 .venv/bin/paper-reading-path order ./papers
 .venv/bin/paper-reading-path order ./papers --graph-output citation_graph.json
+.venv/bin/paper-reading-path visualize citation_graph.json --output citation_graph.md
 ```
 
 By default, an existing `citation_graph.json` is reused as a metadata cache on later runs. Use `--refresh-metadata` to force new arXiv/OpenAlex lookups, or `--no-cache` to ignore the existing graph file.

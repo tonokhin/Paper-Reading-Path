@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 
 from .graph import build_edges, build_prerequisite_edges
-from .graph_io import apply_cached_metadata, has_cached_metadata, load_cached_papers, write_graph_json
+from .graph_io import apply_cached_metadata, has_cached_metadata, load_cached_papers, write_graph_json, write_mermaid_graph
 from .metadata import enrich_papers
 from .ordering import order_papers
 from .pdf_scanner import scan_pdfs
@@ -21,6 +21,13 @@ def main(argv: list[str] | None = None) -> int:
         for paper in papers:
             print(f"{paper.path}\t{paper.arxiv_id or '-'}")
         print(f"Found {len(papers)} PDFs")
+        return 0
+
+    if args.command == "visualize":
+        graph_path = Path(args.pdf_dir)
+        output_path = Path(args.output)
+        write_mermaid_graph(graph_path, output_path)
+        print(f"Saved graph visualization to {output_path}")
         return 0
 
     if args.command in (None, "order"):
@@ -60,8 +67,8 @@ def build_parser() -> argparse.ArgumentParser:
         prog="paper-reading-path",
         description="Generate a reading sequence from a folder of paper PDFs.",
     )
-    parser.add_argument("command", nargs="?", choices=["scan", "order"], help="Command to run.")
-    parser.add_argument("pdf_dir", help="Folder containing PDF papers.")
+    parser.add_argument("command", nargs="?", choices=["scan", "order", "visualize"], help="Command to run.")
+    parser.add_argument("pdf_dir", help="Folder containing PDF papers, or citation_graph.json for visualize.")
     parser.add_argument("--output", default="reading_order.md", help="Markdown output path.")
     parser.add_argument("--graph-output", default="citation_graph.json", help="JSON output path for the prerequisite DAG.")
     parser.add_argument("--metadata-timeout", type=float, default=8.0, help="Seconds to wait for each metadata request.")
