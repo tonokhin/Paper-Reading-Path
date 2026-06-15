@@ -16,23 +16,23 @@ OPENALEX_WORKS_URL = "https://api.openalex.org/works"
 ATOM = "{http://www.w3.org/2005/Atom}"
 
 
-def enrich_papers(papers: list[LocalPaper]) -> None:
+def enrich_papers(papers: list[LocalPaper], timeout: float = 8.0) -> None:
     for paper in papers:
         if paper.arxiv_id:
             try:
-                enrich_from_arxiv(paper)
-            except (HTTPError, URLError, ET.ParseError):
+                enrich_from_arxiv(paper, timeout=timeout)
+            except (HTTPError, URLError, TimeoutError, ET.ParseError):
                 pass
         try:
-            enrich_from_openalex(paper)
-        except (HTTPError, URLError, json.JSONDecodeError):
+            enrich_from_openalex(paper, timeout=timeout)
+        except (HTTPError, URLError, TimeoutError, json.JSONDecodeError):
             pass
 
 
-def enrich_from_arxiv(paper: LocalPaper) -> None:
+def enrich_from_arxiv(paper: LocalPaper, timeout: float = 8.0) -> None:
     params = urlencode({"id_list": paper.arxiv_id})
     request = Request(f"{ARXIV_API_URL}?{params}", headers={"User-Agent": "paper-reading-path/0.1"})
-    with urlopen(request, timeout=30, context=ssl_context()) as response:
+    with urlopen(request, timeout=timeout, context=ssl_context()) as response:
         root = ET.fromstring(response.read())
 
     entry = root.find(f"{ATOM}entry")
@@ -45,10 +45,10 @@ def enrich_from_arxiv(paper: LocalPaper) -> None:
     paper.publication_year = _year(published) or paper.publication_year
 
 
-def enrich_from_openalex(paper: LocalPaper) -> None:
+def enrich_from_openalex(paper: LocalPaper, timeout: float = 8.0) -> None:
     work = None
     if paper.title:
-        work = _openalex_by_title(paper.title)
+        work = _openalex_by_title(paper.title, timeout=timeout)
     if work is None:
         return
 
@@ -59,7 +59,7 @@ def enrich_from_openalex(paper: LocalPaper) -> None:
     paper.referenced_openalex_ids = set(work.get("referenced_works") or [])
 
 
-def _openalex_by_title(title: str) -> dict | None:
+def _openalex_by_title(title: str, timeout: float = 8.0) -> dict | None:
     params = urlencode(
         {
             "search": title,
@@ -67,7 +67,7 @@ def _openalex_by_title(title: str) -> dict | None:
             "select": "id,title,publication_year,cited_by_count,referenced_works",
         }
     )
-    payload = _get_json(f"{OPENALEX_WORKS_URL}?{params}")
+    payload = _get_json(f"{OPENALEX_WORKS_URL}?{params}", timeout=timeout)
     results = payload.get("results", [])
     return _best_title_match(title, results)
 
@@ -91,9 +91,9 @@ def _normalize_title(value: str) -> str:
     return " ".join(value.lower().split())
 
 
-def _get_json(url: str) -> dict:
+def _get_json(url: str, timeout: float = 8.0) -> dict:
     request = Request(url, headers={"User-Agent": "paper-reading-path/0.1"})
-    with urlopen(request, timeout=30, context=ssl_context()) as response:
+    with urlopen(request, timeout=timeout, context=ssl_context()) as response:
         return json.loads(response.read().decode("utf-8"))
 
 

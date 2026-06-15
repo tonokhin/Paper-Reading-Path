@@ -17,6 +17,7 @@ This writes:
 
 ```text
 reading_order.md
+citation_graph.json
 ```
 
 ## Test With AI Paper Fetcher PDFs
@@ -26,6 +27,18 @@ If you already downloaded papers with AI Paper Fetcher, run:
 ```bash
 cd /Users/nokhin/Documents/paper-reading-path
 .venv/bin/paper-reading-path order /Users/nokhin/Documents/ai-paper-fetcher/papers --output reading_order.md
+```
+
+If metadata lookups are slow, lower the per-request timeout:
+
+```bash
+.venv/bin/paper-reading-path order /Users/nokhin/Documents/ai-paper-fetcher/papers --metadata-timeout 5 --output reading_order.md
+```
+
+For a smaller metadata-backed smoke test:
+
+```bash
+.venv/bin/paper-reading-path order /Users/nokhin/Documents/ai-paper-fetcher/papers --max-papers 10 --metadata-timeout 3 --output reading_order.md
 ```
 
 Preview the result:
@@ -48,15 +61,20 @@ The current MVP:
 - Infers arXiv IDs from filenames when possible
 - Resolves metadata from arXiv or OpenAlex
 - Uses OpenAlex references to detect citation relationships among the local PDFs
-- Scores papers so prerequisite/foundational papers appear earlier
+- Inverts citation edges into prerequisite edges
+- Uses DAG-style topological ordering so prerequisites appear earlier
 - Generates a Markdown reading order
+- Saves the prerequisite graph as `citation_graph.json`
 
 ## Commands
 
 ```bash
 .venv/bin/paper-reading-path scan ./papers
 .venv/bin/paper-reading-path order ./papers
+.venv/bin/paper-reading-path order ./papers --graph-output citation_graph.json
 ```
+
+By default, an existing `citation_graph.json` is reused as a metadata cache on later runs. Use `--refresh-metadata` to force new arXiv/OpenAlex lookups, or `--no-cache` to ignore the existing graph file.
 
 ## Notes
 

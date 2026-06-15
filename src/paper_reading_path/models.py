@@ -24,3 +24,10 @@ class LocalPaper:
 class CitationEdge:
     citing_id: str
     cited_id: str
+
+
+@dataclass
+class PrerequisiteEdge:
+    from_id: str
+    to_id: str
+    relation: str = "prerequisite"

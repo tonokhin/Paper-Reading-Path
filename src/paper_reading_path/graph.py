@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from .models import CitationEdge, LocalPaper
+from .models import CitationEdge, LocalPaper, PrerequisiteEdge
 
 
 def build_edges(papers: list[LocalPaper]) -> list[CitationEdge]:
@@ -19,3 +19,10 @@ def build_edges(papers: list[LocalPaper]) -> list[CitationEdge]:
                 edges.append(CitationEdge(citing_id=paper.openalex_id, cited_id=referenced_id))
 
     return edges
+
+
+def build_prerequisite_edges(edges: list[CitationEdge]) -> list[PrerequisiteEdge]:
+    return [
+        PrerequisiteEdge(from_id=edge.cited_id, to_id=edge.citing_id)
+        for edge in edges
+    ]

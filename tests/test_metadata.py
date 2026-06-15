@@ -20,6 +20,17 @@ class MetadataTests(unittest.TestCase):
 
         self.assertEqual(papers[0].arxiv_id, "1706.03762")
 
+    def test_enrich_papers_continues_after_timeout(self):
+        papers = [LocalPaper(path=Path("1706.03762.pdf"), arxiv_id="1706.03762")]
+
+        with (
+            patch("paper_reading_path.metadata.enrich_from_arxiv", side_effect=TimeoutError("timed out")),
+            patch("paper_reading_path.metadata.enrich_from_openalex", side_effect=TimeoutError("timed out")),
+        ):
+            enrich_papers(papers)
+
+        self.assertEqual(papers[0].arxiv_id, "1706.03762")
+
 
 if __name__ == "__main__":
     unittest.main()

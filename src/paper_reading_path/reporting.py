@@ -16,6 +16,7 @@ def render_reading_order(papers: list[LocalPaper], edges: list[CitationEdge]) ->
         "",
         f"Total papers: {len(papers)}",
         f"Local citation edges: {len(edges)}",
+        "Reading order uses prerequisite edges derived by inverting local citation edges.",
         "",
     ]
 

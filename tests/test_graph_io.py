@@ -1,0 +1,60 @@
+from pathlib import Path
+import unittest
+
+from paper_reading_path.graph_io import apply_cached_metadata, graph_payload, load_cached_papers
+from paper_reading_path.models import LocalPaper, PrerequisiteEdge
+
+
+class GraphIoTests(unittest.TestCase):
+    def test_graph_payload_uses_prerequisite_edges(self):
+        paper = LocalPaper(
+            path=Path("paper.pdf"),
+            title="Paper",
+            openalex_id="A",
+            arxiv_id="1234.5678",
+            publication_year=2020,
+            citation_count=10,
+        )
+        payload = graph_payload([paper], [PrerequisiteEdge(from_id="A", to_id="B")])
+
+        self.assertEqual(payload["nodes"][0]["id"], "A")
+        self.assertEqual(payload["nodes"][0]["referenced_openalex_ids"], [])
+        self.assertEqual(payload["edges"][0], {"from": "A", "to": "B", "type": "prerequisite"})
+
+    def test_load_and_apply_cached_metadata(self):
+        with self.subTest("cache by path and arxiv id"):
+            payload = {
+                "nodes": [
+                    {
+                        "path": "paper.pdf",
+                        "title": "Cached Paper",
+                        "arxiv_id": "1234.5678",
+                        "doi": "10.1234/example",
+                        "openalex_id": "A",
+                        "year": 2020,
+                        "citation_count": 10,
+                        "referenced_openalex_ids": ["B"],
+                    }
+                ],
+                "edges": [],
+            }
+
+            import json
+            import tempfile
+
+            with tempfile.TemporaryDirectory() as temp_dir:
+                graph_path = Path(temp_dir) / "citation_graph.json"
+                graph_path.write_text(json.dumps(payload), encoding="utf-8")
+                cached = load_cached_papers(graph_path)
+                paper = LocalPaper(path=Path("paper.pdf"), arxiv_id="1234.5678")
+
+                applied = apply_cached_metadata([paper], cached)
+
+        self.assertEqual(applied, 1)
+        self.assertEqual(paper.title, "Cached Paper")
+        self.assertEqual(paper.openalex_id, "A")
+        self.assertEqual(paper.referenced_openalex_ids, {"B"})
+
+
+if __name__ == "__main__":
+    unittest.main()
